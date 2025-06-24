@@ -1,0 +1,1 @@
+<full JSX from the Simulated Returns Tool canvas document goes here>
