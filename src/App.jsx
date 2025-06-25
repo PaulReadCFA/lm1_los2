@@ -3,13 +3,13 @@ import { useState } from 'react';
 export default function SimulatedReturnsTool() {
   const [drift, setDrift] = useState(3);
   const [volatility, setVolatility] = useState(17);
+  const [months, setMonths] = useState(12);
   const [cumulativeData, setCumulativeData] = useState([]);
   const [returnData, setReturnData] = useState([]);
   const [stats, setStats] = useState({});
   const [chartKey, setChartKey] = useState(0);
 
   function simulateReturns() {
-    const months = 12;
     let returns = [];
     let cumulative = [100];
 
@@ -39,21 +39,12 @@ export default function SimulatedReturnsTool() {
     setChartKey(prev => prev + 1);
   }
 
-  const labels = Array.from({ length: 13 }, (_, i) => `Month ${i}`);
-  const statKeys = [
-    ['Arithmetic Mean (Monthly)', 'arithMean'],
-    ['Geometric Mean (Monthly)', 'geomMean'],
-    ['Arithmetic Mean (Annualized)', 'arithMeanAnnual'],
-    ['Geometric Mean (Annualized)', 'geomMeanAnnual'],
-    ['Holding Period Return', 'holdingPeriod']
-  ];
-  const barStats = statKeys.map(([label, key]) => ({ label, value: stats[key] ? stats[key] * 100 : 0 }));
-  const fixedBarMax = 10;
+  const labels = Array.from({ length: months + 1 }, (_, i) => `Month ${i}`);
 
   return (
     <div className="p-4 max-w-4xl mx-auto font-sans text-black">
       <h1 className="text-xl font-bold font-serif mb-4">Simulated Portfolio Returns</h1>
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block mb-1">Drift (% annualized):</label>
           <input type="number" value={drift} onChange={e => setDrift(Number(e.target.value))} className="border p-1 w-full" />
@@ -61,6 +52,10 @@ export default function SimulatedReturnsTool() {
         <div>
           <label className="block mb-1">Volatility (% annualized):</label>
           <input type="number" value={volatility} onChange={e => setVolatility(Number(e.target.value))} className="border p-1 w-full" />
+        </div>
+        <div>
+          <label className="block mb-1">Number of Months:</label>
+          <input type="number" value={months} onChange={e => setMonths(Number(e.target.value))} className="border p-1 w-full" />
         </div>
       </div>
       <button onClick={simulateReturns} className="bg-[#06005A] text-white px-4 py-2 rounded">Recalculate</button>
@@ -123,13 +118,28 @@ export default function SimulatedReturnsTool() {
                 </tr>
               </tbody>
             </table>
-</div>
+          </div>
 
-
+          <div className="mt-6">
+            <h2 className="font-semibold font-serif">Return Statistics</h2>
+            <table className="table-auto border w-full text-sm mt-2">
+              <thead>
+                <tr>
+                  <th className="border px-2 py-1 text-left">Measure</th>
+                  <th className="border px-2 py-1 text-right">Value (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td className="border px-2 py-1">Arithmetic Mean (Monthly)</td><td className="border px-2 py-1 text-right">{(stats.arithMean * 100).toFixed(2)}</td></tr>
+                <tr><td className="border px-2 py-1">Arithmetic Mean (Annualized)</td><td className="border px-2 py-1 text-right">{(stats.arithMeanAnnual * 100).toFixed(2)}</td></tr>
+                <tr><td className="border px-2 py-1">Geometric Mean (Monthly)</td><td className="border px-2 py-1 text-right">{(stats.geomMean * 100).toFixed(2)}</td></tr>
+                <tr><td className="border px-2 py-1">Geometric Mean (Annualized)</td><td className="border px-2 py-1 text-right">{(stats.geomMeanAnnual * 100).toFixed(2)}</td></tr>
+                <tr><td className="border px-2 py-1">Holding Period Return</td><td className="border px-2 py-1 text-right">{(stats.holdingPeriod * 100).toFixed(2)}</td></tr>
+              </tbody>
+            </table>
+          </div>
         </>
       )}
-
-      
     </div>
   );
 }
