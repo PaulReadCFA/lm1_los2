@@ -1,33 +1,50 @@
 import { useState } from 'react';
 
+// Main component for simulating portfolio returns
 export default function SimulatedReturnsTool() {
-  const [drift, setDrift] = useState(3);
-  const [volatility, setVolatility] = useState(17);
-  const [months, setMonths] = useState(12);
-  const [cumulativeData, setCumulativeData] = useState([]);
-  const [returnData, setReturnData] = useState([]);
-  const [stats, setStats] = useState({});
-  const [chartKey, setChartKey] = useState(0);
+  // State variables for user inputs
+  const [drift, setDrift] = useState(3); // Expected annual return in %
+  const [volatility, setVolatility] = useState(17); // Annual volatility in %
+  const [months, setMonths] = useState(12); // Number of months to simulate
 
+  // State variables for computed data and visualization
+  const [cumulativeData, setCumulativeData] = useState([]); // Portfolio value over time
+  const [returnData, setReturnData] = useState([]); // Monthly return values
+  const [stats, setStats] = useState({}); // Summary statistics
+  const [chartKey, setChartKey] = useState(0); // Forces chart redraw
+
+  // Function to run the simulation
   function simulateReturns() {
-    let returns = [];
-    let cumulative = [100];
+    let returns = [];        // Array of monthly returns
+    let cumulative = [100];  // Starting portfolio value at 100
 
+    // Generate random returns month by month
     for (let i = 0; i < months; i++) {
+      // Generate standard normal value using Box-Muller
       const rand = Math.random();
       const norm = Math.sqrt(-2 * Math.log(rand)) * Math.cos(2 * Math.PI * rand);
+
+      // Convert annual drift/volatility to monthly return
       const monthlyReturn = (drift / 12) / 100 + (volatility / 100) * norm / Math.sqrt(12);
-      returns.push(monthlyReturn);
-      cumulative.push(cumulative[i] * (1 + monthlyReturn));
+
+      returns.push(monthlyReturn); // Store return
+      cumulative.push(cumulative[i] * (1 + monthlyReturn)); // Update cumulative value
     }
 
+    // Calculate statistics
     const arithMean = returns.reduce((a, b) => a + b, 0) / months;
+
     const geomMean = Math.pow(cumulative[months] / 100, 1 / months) - 1;
-    const volatilityAnnual = Math.sqrt(returns.map(r => Math.pow(r - arithMean, 2)).reduce((a, b) => a + b, 0) / months) * Math.sqrt(12);
+
+    const volatilityAnnual = Math.sqrt(
+      returns.map(r => Math.pow(r - arithMean, 2)).reduce((a, b) => a + b, 0) / months
+    ) * Math.sqrt(12);
+
     const holdingPeriod = cumulative[months] / 100 - 1;
 
+    // Store computed data in state
     setCumulativeData(cumulative);
-    setReturnData([0, ...returns.map(r => r * 100)]);
+    setReturnData([0, ...returns.map(r => r * 100)]); // Convert to percentage
     setStats({
       arithMean,
       geomMean,
@@ -36,32 +53,59 @@ export default function SimulatedReturnsTool() {
       volatilityAnnual,
       holdingPeriod
     });
-    setChartKey(prev => prev + 1);
+    setChartKey(prev => prev + 1); // Refresh chart
   }
 
+  // Create labels for each month
   const labels = Array.from({ length: months + 1 }, (_, i) => `Month ${i}`);
 
   return (
     <div className="p-4 max-w-4xl mx-auto font-sans text-black">
       <h1 className="text-xl font-bold font-serif mb-4">Simulated Portfolio Returns</h1>
+
+      {/* Input controls */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block mb-1">Drift (% annualized):</label>
-          <input type="number" value={drift} onChange={e => setDrift(Number(e.target.value))} className="border p-1 w-full" />
+          <input
+            type="number"
+            value={drift}
+            onChange={e => setDrift(Number(e.target.value))}
+            className="border p-1 w-full"
+          />
         </div>
         <div>
           <label className="block mb-1">Volatility (% annualized):</label>
-          <input type="number" value={volatility} onChange={e => setVolatility(Number(e.target.value))} className="border p-1 w-full" />
+          <input
+            type="number"
+            value={volatility}
+            onChange={e => setVolatility(Number(e.target.value))}
+            className="border p-1 w-full"
+          />
         </div>
         <div>
           <label className="block mb-1">Number of Months:</label>
-          <input type="number" value={months} onChange={e => setMonths(Number(e.target.value))} className="border p-1 w-full" />
+          <input
+            type="number"
+            value={months}
+            onChange={e => setMonths(Number(e.target.value))}
+            className="border p-1 w-full"
+          />
         </div>
       </div>
-      <button onClick={simulateReturns} className="bg-[#06005A] text-white px-4 py-2 rounded">Recalculate</button>
 
+      {/* Button to trigger the simulation */}
+      <button
+        onClick={simulateReturns}
+        className="bg-[#06005A] text-white px-4 py-2 rounded"
+      >
+        Recalculate
+      </button>
+
+      {/* Show results if data has been generated */}
       {cumulativeData.length > 0 && (
         <>
+          {/* Chart of cumulative value */}
           <div className="mt-6">
             <h2 className="font-semibold font-serif">Cumulative Portfolio Value</h2>
             <svg viewBox="0 0 420 220" className="w-full h-56 bg-gray-50">
@@ -76,12 +120,14 @@ export default function SimulatedReturnsTool() {
 
                   return (
                     <>
+                      {/* Draw the polyline for portfolio values */}
                       <polyline
                         fill="none"
                         stroke="#4476FF"
                         strokeWidth="2"
                         points={cumulativeData.map((d, i) => `${xScale(i)},${yScale(d)}`).join(' ')}
                       />
+                      {/* Draw horizontal grid lines and labels */}
                       {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((val, i) => {
                         const y = yScale(val);
                         return (
@@ -98,28 +144,36 @@ export default function SimulatedReturnsTool() {
             </svg>
           </div>
 
+          {/* Table of returns and cumulative values */}
           <div className="mt-6">
             <h2 className="font-semibold font-serif">Returns Table</h2>
             <table className="table-auto border w-full text-sm">
               <thead>
                 <tr>
                   <th className="border px-2 py-1 w-20 font-mono text-right">Month</th>
-                  {labels.map((_, i) => <th key={i} className="border px-2 py-1 w-20 font-mono text-right">{i}</th>)}
+                  {labels.map((_, i) => (
+                    <th key={i} className="border px-2 py-1 w-20 font-mono text-right">{i}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="border px-2 py-1 w-20 font-mono text-right font-semibold">Portfolio Return (%)</td>
-                  {returnData.map((val, i) => <td key={i} className="border px-2 py-1 w-20 font-mono text-right">{val.toFixed(2)}</td>)}
+                  <td className="border px-2 py-1 font-mono text-right font-semibold">Portfolio Return (%)</td>
+                  {returnData.map((val, i) => (
+                    <td key={i} className="border px-2 py-1 font-mono text-right">{val.toFixed(2)}</td>
+                  ))}
                 </tr>
                 <tr>
-                  <td className="border px-2 py-1 w-20 font-mono text-right font-semibold">Cumulative Value</td>
-                  {cumulativeData.map((val, i) => <td key={i} className="border px-2 py-1 w-20 font-mono text-right">{val.toFixed(2)}</td>)}
+                  <td className="border px-2 py-1 font-mono text-right font-semibold">Cumulative Value</td>
+                  {cumulativeData.map((val, i) => (
+                    <td key={i} className="border px-2 py-1 font-mono text-right">{val.toFixed(2)}</td>
+                  ))}
                 </tr>
               </tbody>
             </table>
           </div>
 
+          {/* Table of summary statistics */}
           <div className="mt-6">
             <h2 className="font-semibold font-serif">Return Statistics</h2>
             <table className="table-auto border w-full text-sm mt-2">
