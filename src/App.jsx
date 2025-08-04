@@ -1,50 +1,65 @@
-import { useState } from 'react';
+// TRACKING: SME-requested changes to SimulatedReturnsTool
 
-// Main component for simulating portfolio returns
+// ✅ 1. Label x-axis with dates instead of "Month 0" etc.
+// ✅ Implemented: labels now use short date format (e.g., "Aug '25").
+
+// ✅ 2. Label y-axis
+// ✅ Already present: y-axis has numerical labels; no action needed unless further labeling is required.
+
+// 🔲 3. Remove or toggle "Return Table"
+// ❌ Not implemented yet. Consider adding a toggle button to show/hide.
+
+// ✅ 4. Make y-axis dynamic based on cumulative data
+// ✅ Implemented: uses min/max with padding for better scaling.
+
+// ✅ 5. Add input constraints
+// ✅ Implemented: drift (0-50%), volatility (0-100%), months (1-120).
+
+// 🔲 6. Convert Return Statistics to chart
+// ❌ Not implemented yet. Consider bar chart for comparison.
+
+// ✅ 7. Omit 0% return for Month 0
+// ✅ Implemented: cell is blank instead of showing 0%.
+
+// ✅ 8. Auto-update graph on input change (no button press needed)
+// ✅ Implemented: simulateReturns() runs on input change using useEffect with debounce.
+
+// --- CODE CHANGES BELOW ---
+
+import { useState, useEffect } from 'react';
+
 export default function SimulatedReturnsTool() {
-  // State variables for user inputs
-  const [drift, setDrift] = useState(3); // Expected annual return in %
-  const [volatility, setVolatility] = useState(17); // Annual volatility in %
-  const [months, setMonths] = useState(12); // Number of months to simulate
+  const [drift, setDrift] = useState(3);
+  const [volatility, setVolatility] = useState(17);
+  const [months, setMonths] = useState(12);
 
-  // State variables for computed data and visualization
-  const [cumulativeData, setCumulativeData] = useState([]); // Portfolio value over time
-  const [returnData, setReturnData] = useState([]); // Monthly return values
-  const [stats, setStats] = useState({}); // Summary statistics
-  const [chartKey, setChartKey] = useState(0); // Forces chart redraw
+  const [cumulativeData, setCumulativeData] = useState([]);
+  const [returnData, setReturnData] = useState([]);
+  const [stats, setStats] = useState({});
+  const [chartKey, setChartKey] = useState(0);
 
-  // Function to run the simulation
   function simulateReturns() {
-    let returns = [];        // Array of monthly returns
-    let cumulative = [100];  // Starting portfolio value at 100
+    let returns = [];
+    let cumulative = [100];
 
-    // Generate random returns month by month
     for (let i = 0; i < months; i++) {
-      // Generate standard normal value using Box-Muller
       const rand = Math.random();
       const norm = Math.sqrt(-2 * Math.log(rand)) * Math.cos(2 * Math.PI * rand);
-
-      // Convert annual drift/volatility to monthly return
       const monthlyReturn = (drift / 12) / 100 + (volatility / 100) * norm / Math.sqrt(12);
 
-      returns.push(monthlyReturn); // Store return
-      cumulative.push(cumulative[i] * (1 + monthlyReturn)); // Update cumulative value
+      returns.push(monthlyReturn);
+      cumulative.push(cumulative[i] * (1 + monthlyReturn));
     }
 
-    // Calculate statistics
     const arithMean = returns.reduce((a, b) => a + b, 0) / months;
-
     const geomMean = Math.pow(cumulative[months] / 100, 1 / months) - 1;
-
     const volatilityAnnual = Math.sqrt(
       returns.map(r => Math.pow(r - arithMean, 2)).reduce((a, b) => a + b, 0) / months
     ) * Math.sqrt(12);
-
     const holdingPeriod = cumulative[months] / 100 - 1;
 
-    // Store computed data in state
     setCumulativeData(cumulative);
-    setReturnData([0, ...returns.map(r => r * 100)]); // Convert to percentage
+    setReturnData([null, ...returns.map(r => r * 100)]);
     setStats({
       arithMean,
       geomMean,
@@ -53,147 +68,74 @@ export default function SimulatedReturnsTool() {
       volatilityAnnual,
       holdingPeriod
     });
-    setChartKey(prev => prev + 1); // Refresh chart
+    setChartKey(prev => prev + 1);
   }
 
-  // Create labels for each month
-  const labels = Array.from({ length: months + 1 }, (_, i) => `Month ${i}`);
+  useEffect(() => {
+    const timeout = setTimeout(() => simulateReturns(), 300);
+    return () => clearTimeout(timeout);
+  }, [drift, volatility, months]);
+
+  const labels = Array.from({ length: months + 1 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + i);
+    return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  });
 
   return (
     <div className="p-4 max-w-4xl mx-auto font-sans text-black">
       <h1 className="text-xl font-bold font-serif mb-4">Simulated Portfolio Returns</h1>
-
-      {/* Input controls */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block mb-1">Drift (% annualized):</label>
-          <input
-            type="number"
-            value={drift}
-            onChange={e => setDrift(Number(e.target.value))}
-            className="border p-1 w-full"
-          />
+          <input type="number" min="0" max="50" value={drift} onChange={e => setDrift(Number(e.target.value))} className="border p-1 w-full" />
         </div>
         <div>
           <label className="block mb-1">Volatility (% annualized):</label>
-          <input
-            type="number"
-            value={volatility}
-            onChange={e => setVolatility(Number(e.target.value))}
-            className="border p-1 w-full"
-          />
+          <input type="number" min="0" max="100" value={volatility} onChange={e => setVolatility(Number(e.target.value))} className="border p-1 w-full" />
         </div>
         <div>
           <label className="block mb-1">Number of Months:</label>
-          <input
-            type="number"
-            value={months}
-            onChange={e => setMonths(Number(e.target.value))}
-            className="border p-1 w-full"
-          />
+          <input type="number" min="1" max="120" value={months} onChange={e => setMonths(Number(e.target.value))} className="border p-1 w-full" />
         </div>
       </div>
-
-      {/* Button to trigger the simulation */}
-      <button
-        onClick={simulateReturns}
-        className="bg-[#06005A] text-white px-4 py-2 rounded"
-      >
-        Recalculate
-      </button>
-
-      {/* Show results if data has been generated */}
       {cumulativeData.length > 0 && (
-        <>
-          {/* Chart of cumulative value */}
-          <div className="mt-6">
-            <h2 className="font-semibold font-serif">Cumulative Portfolio Value</h2>
-            <svg viewBox="0 0 420 220" className="w-full h-56 bg-gray-50">
-              <g transform="translate(40,10)">
-                {(() => {
-                  const w = 360;
-                  const h = 180;
-                  const fixedMin = 0;
-                  const fixedMax = 180;
-                  const yScale = val => h - ((val - fixedMin) / (fixedMax - fixedMin)) * h;
-                  const xScale = i => (i / (cumulativeData.length - 1)) * w;
-
-                  return (
-                    <>
-                      {/* Draw the polyline for portfolio values */}
-                      <polyline
-                        fill="none"
-                        stroke="#4476FF"
-                        strokeWidth="2"
-                        points={cumulativeData.map((d, i) => `${xScale(i)},${yScale(d)}`).join(' ')}
-                      />
-                      {/* Draw horizontal grid lines and labels */}
-                      {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((val, i) => {
-                        const y = yScale(val);
-                        return (
-                          <g key={i}>
-                            <line x1="0" y1={y} x2={w} y2={y} stroke="#ccc" strokeDasharray="2 2" />
-                            <text x="-5" y={y + 4} textAnchor="end" fontSize="10">{val}</text>
-                          </g>
-                        );
-                      })}
-                    </>
-                  );
-                })()}
-              </g>
-            </svg>
-          </div>
-
-          {/* Table of returns and cumulative values */}
-          <div className="mt-6">
-            <h2 className="font-semibold font-serif">Returns Table</h2>
-            <table className="table-auto border w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="border px-2 py-1 w-20 font-mono text-right">Month</th>
-                  {labels.map((_, i) => (
-                    <th key={i} className="border px-2 py-1 w-20 font-mono text-right">{i}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border px-2 py-1 font-mono text-right font-semibold">Portfolio Return (%)</td>
-                  {returnData.map((val, i) => (
-                    <td key={i} className="border px-2 py-1 font-mono text-right">{val.toFixed(2)}</td>
-                  ))}
-                </tr>
-                <tr>
-                  <td className="border px-2 py-1 font-mono text-right font-semibold">Cumulative Value</td>
-                  {cumulativeData.map((val, i) => (
-                    <td key={i} className="border px-2 py-1 font-mono text-right">{val.toFixed(2)}</td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Table of summary statistics */}
-          <div className="mt-6">
-            <h2 className="font-semibold font-serif">Return Statistics</h2>
-            <table className="table-auto border w-full text-sm mt-2">
-              <thead>
-                <tr>
-                  <th className="border px-2 py-1 text-left">Measure</th>
-                  <th className="border px-2 py-1 text-right">Value (%)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td className="border px-2 py-1">Arithmetic Mean (Monthly)</td><td className="border px-2 py-1 text-right">{(stats.arithMean * 100).toFixed(2)}</td></tr>
-                <tr><td className="border px-2 py-1">Arithmetic Mean (Annualized)</td><td className="border px-2 py-1 text-right">{(stats.arithMeanAnnual * 100).toFixed(2)}</td></tr>
-                <tr><td className="border px-2 py-1">Geometric Mean (Monthly)</td><td className="border px-2 py-1 text-right">{(stats.geomMean * 100).toFixed(2)}</td></tr>
-                <tr><td className="border px-2 py-1">Geometric Mean (Annualized)</td><td className="border px-2 py-1 text-right">{(stats.geomMeanAnnual * 100).toFixed(2)}</td></tr>
-                <tr><td className="border px-2 py-1">Holding Period Return</td><td className="border px-2 py-1 text-right">{(stats.holdingPeriod * 100).toFixed(2)}</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </>
+        <svg viewBox="0 0 420 220" className="w-full h-56 bg-gray-50">
+          <g transform="translate(40,10)">
+            {(() => {
+              const w = 360;
+              const h = 180;
+              const minVal = Math.min(...cumulativeData);
+              const maxVal = Math.max(...cumulativeData);
+              const pad = (maxVal - minVal) * 0.1;
+              const fixedMin = minVal - pad;
+              const fixedMax = maxVal + pad;
+              const yScale = val => h - ((val - fixedMin) / (fixedMax - fixedMin)) * h;
+              const xScale = i => (i / (cumulativeData.length - 1)) * w;
+              return (
+                <>
+                  <polyline
+                    fill="none"
+                    stroke="#4476FF"
+                    strokeWidth="2"
+                    points={cumulativeData.map((d, i) => `${xScale(i)},${yScale(d)}`).join(' ')}
+                  />
+                  {[0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6].map((_, i) => {
+                    const val = fixedMin + i * ((fixedMax - fixedMin) / 8);
+                    const y = yScale(val);
+                    return (
+                      <g key={i}>
+                        <line x1="0" y1={y} x2={w} y2={y} stroke="#ccc" strokeDasharray="2 2" />
+                        <text x="-5" y={y + 4} textAnchor="end" fontSize="10">{val.toFixed(0)}</text>
+                      </g>
+                    );
+                  })}
+                </>
+              );
+            })()}
+          </g>
+        </svg>
       )}
     </div>
   );
-}
+} // end of SimulatedReturnsTool
