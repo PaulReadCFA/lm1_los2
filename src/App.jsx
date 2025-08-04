@@ -199,21 +199,24 @@ export default function SimulatedReturnsTool() {
                 const max = Math.max(...statsArray.map(d => d.value));
                 const barWidth = 80;
                 const gap = 20;
-                const chartHeight = 120;
-                return (
-                  <g transform="translate(40,10)">
-                    {statsArray.map((d, i) => {
-                      const height = (d.value / max) * chartHeight;
-                      return (
-                        <g key={i} transform={`translate(${i * (barWidth + gap)},0)`}>
-                          <rect x="0" y={chartHeight - height} width={barWidth} height={height} fill="#3b82f6" />
-                          <text x={barWidth / 2} y={chartHeight + 15} textAnchor="middle" fontSize="10">{d.label}</text>
-                          <text x={barWidth / 2} y={chartHeight - height - 5} textAnchor="middle" fontSize="10">{d.value.toFixed(2)}%</text>
-                        </g>
-                      );
-                    })}
-                  </g>
-                );
+
+const chartHeight = 100;
+return (
+  <g transform="translate(40,20)"> // previously translate(40,10)
+    {statsArray.map((d, i) => {
+      const height = (d.value / max) * chartHeight;
+      return (
+        <g key={i} transform={`translate(${i * (barWidth + gap)},0)`}>
+          <rect x="0" y={chartHeight - height} width={barWidth} height={height} fill="#3b82f6" />
+          <text x={barWidth / 2} y={chartHeight - height - 8} textAnchor="middle" fontSize="10">{d.value.toFixed(2)}%</text>
+          <text x={barWidth / 2} y={chartHeight + 14} textAnchor="middle" fontSize="10">{d.label}</text>
+        </g>
+      );
+    })}
+  </g>
+);
+          
+
               })()}
             </svg>
           </div>
