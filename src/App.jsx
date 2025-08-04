@@ -140,7 +140,7 @@ export default function SimulatedReturnsTool() {
             </g>
             {/* Axis labels */}
 <text x="180" y="215" fontSize="12" textAnchor="middle">Month</text>
-<text x="-30" y="90" transform="rotate(-90)" fontSize="12" textAnchor="middle">Portfolio Value</text>
+<text x="-30", y="-20" transform="rotate(-90)" fontSize="12" textAnchor="middle">Value</text>
           
           </svg>
 
