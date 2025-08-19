@@ -143,6 +143,14 @@ export default function SimulatedReturnsTool() {
 <text x="-30" y="0" transform="rotate(-90)" fontSize="12" textAnchor="middle">Value</text>
           
           </svg>
+                                    <div className="mt-2">
+  <button
+    onClick={simulateReturns}
+    className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+  >
+    Regenerate Returns
+  </button>
+</div>
 
           {/* Return Table Toggle */}
           <div className="mt-4">
@@ -186,7 +194,10 @@ export default function SimulatedReturnsTool() {
                   </tr>
                 </tbody>
               </table>
+
+
             </div>
+
           )}
 
           {/* Return Statistics Chart */}
